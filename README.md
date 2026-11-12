@@ -6,7 +6,7 @@
 
 Chrome extension (Manifest V3, no dependencies, no build step). When a PR's merge box
 says **"Required checks failing"** but no CI check has failed and the PR is really
-waiting for a review, the extension changes the header to **"Review required"** /
+waiting for a review (or for requested changes), the extension changes the header to **"Review required"** /
 "At least 1 approving review is required." and turns the red badge yellow (Primer
 attention colours, so it works in light and dark themes).
 
@@ -15,12 +15,18 @@ attention colours, so it works in light and dark themes).
 - No permissions, no background worker, no storage. A single content script runs on
   `https://github.com/*` (so GitHub's SPA navigation is covered) and does nothing outside
   `/<owner>/<repo>/pull/<n>`.
-- Check states come from the same endpoint GitHub's merge box uses,
-  `/{owner}/{repo}/pull/{n}/page_data/status_checks` (same origin, your session). It works
-  even when the checks list is collapsed.
+- Check states come from GitHub's own merge box requests to
+  `/{owner}/{repo}/pull/{n}/page_data/status_checks`. A small page hook (`page-hook.js`)
+  reads a copy of each response, so background updates are picked up straight away, even
+  when the checks list is collapsed. The request and response are not modified. If the
+  hook sees nothing, the extension makes the same request itself.
 - Overrides only when every failing check is a review gate (name contains
-  review/approv…, e.g. an n8n status "Review approved by everyone") and the merge box
-  says an approval is missing. Any other failing check leaves GitHub's red UI alone.
+  review/approv…, e.g. an n8n status "Review approved by everyone"). Any other failing
+  check leaves GitHub's red UI alone.
+- The header says what is really blocking the merge:
+  - approvals missing: **Review required** / "At least N approving review(s)…" (yellow)
+  - a reviewer requested changes: **Changes requested** / "N review(s) requesting changes." (stays red)
+  - only the review gate is waiting: **Review required** / "Waiting for "<check name>"." (yellow)
 - The tab favicon switches from GitHub's red "failure" icon to its yellow "pending" one
   while the override is active.
 - React-safe: only the `nodeValue` of the two text nodes changes. Colours are switched

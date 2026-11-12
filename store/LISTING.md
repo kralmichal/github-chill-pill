@@ -24,13 +24,13 @@ review-gate status check such as "Review approved by everyone".
 
 Chill Pill notices this and calms the merge box down:
 
-• The heading becomes "Review required", the subtext "At least 1 approving review is required."
+• The heading says what really blocks the merge: "Review required" (approvals missing) or "Changes requested" (a reviewer asked for changes).
 • The red error badge turns into GitHub's yellow attention style, in light and dark themes.
 • The tab favicon shows GitHub's yellow "pending" icon instead of the red "failed" one.
 • If a real CI check fails, the original red state comes back straight away. Real failures are never hidden.
 
 How it works
-• It reads the check states from the same github.com endpoint GitHub's merge box uses, so it works even when the checks list is collapsed.
+• It reads a copy of the check data GitHub's merge box loads, so it reacts to background updates straight away and works even when the checks list is collapsed. GitHub's requests are never modified.
 • It overrides only when every failing check is a review gate and the merge box reports a missing approval.
 • It is React-safe: it changes only text and adds CSS attributes, and never rebuilds GitHub's UI.
 
