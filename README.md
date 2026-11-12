@@ -10,6 +10,8 @@ waiting for a review, the extension changes the header to **"Review required"** 
 "At least 1 approving review is required." and turns the red badge yellow (Primer
 attention colours, so it works in light and dark themes).
 
+<img src="store/screenshot-1280x800.png" width="640" alt="Merge box before and after">
+
 - No permissions, no background worker, no storage. A single content script runs on
   `https://github.com/*` (so GitHub's SPA navigation is covered) and does nothing outside
   `/<owner>/<repo>/pull/<n>`.
@@ -25,7 +27,7 @@ attention colours, so it works in light and dark themes).
   through `data-ghrr-*` attributes plus `styles.css`.
 - Reversible: if a check fails later, the original text and styling come back.
 
-## Installation
+## Installation (from source)
 
 1. Open `chrome://extensions`.
 2. Turn on **Developer mode** (top right).
@@ -37,19 +39,11 @@ After you change the code, click ↻ on the extension card and reload the GitHub
 ## Debugging
 
 Open DevTools on a PR, set the console level to include **Verbose**, and filter by `ghrr`.
-Each time the decision changes,
-you get a line with the reason (for example `override skipped: failing check(s): "build" (FAILURE)`).
+Each time the decision changes, you get a line with the reason (for example `override skipped: failing check(s): "build" (FAILURE)`).
 
-## Publishing to the Chrome Web Store
+## Privacy
 
-1. Bump `version` in `manifest.json`.
-2. Run `./package.sh`. It creates `dist/github-chill-pill-<version>.zip` with only the files
-   the extension needs.
-3. Upload the zip in the [Chrome Web Store developer dashboard](https://chrome.google.com/webstore/devconsole).
-4. Copy the listing texts, privacy answers and asset paths from [`store/LISTING.md`](store/LISTING.md).
-   The privacy policy is in [`PRIVACY.md`](PRIVACY.md).
-
-<img src="store/screenshot-1280x800.png" width="640" alt="Merge box before and after">
+No data collection, no tracking, no storage. See [PRIVACY.md](PRIVACY.md).
 
 ## License
 
