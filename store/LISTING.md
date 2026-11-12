@@ -26,6 +26,7 @@ Chill Pill notices this and calms the merge box down:
 
 • The heading becomes "Review required", the subtext "At least 1 approving review is required."
 • The red error badge turns into GitHub's yellow attention style, in light and dark themes.
+• The tab favicon shows GitHub's yellow "pending" icon instead of the red "failed" one.
 • If a real CI check fails, the original red state comes back straight away. Real failures are never hidden.
 
 How it works

@@ -19,6 +19,8 @@ attention colours, so it works in light and dark themes).
 - Overrides only when every failing check is a review gate (name contains
   review/approv…, e.g. an n8n status "Review approved by everyone") and the merge box
   says an approval is missing. Any other failing check leaves GitHub's red UI alone.
+- The tab favicon switches from GitHub's red "failure" icon to its yellow "pending" one
+  while the override is active.
 - React-safe: only the `nodeValue` of the two text nodes changes. Colours are switched
   through `data-ghrr-*` attributes plus `styles.css`.
 - Reversible: if a check fails later, the original text and styling come back.

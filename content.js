@@ -537,6 +537,7 @@
         subtext: null,
         subtextOriginal: null,
         marked: new Set(),
+        favicons: new Map(),
       };
     }
 
@@ -562,6 +563,7 @@
 
     setAttr(ctx.header, 'data-ghrr-override', 'review-required');
     applyColours(ctx);
+    swapFavicons();
   }
 
   function restoreSubtext() {
@@ -570,8 +572,31 @@
     }
   }
 
+  /**
+   * GitHub shows the PR's check state in the tab favicon
+   * (<link class="js-site-favicon" href=".../favicon-failure[-dark].svg|png">).
+   * Show GitHub's own "pending" (yellow) favicon instead of "failure".
+   */
+  function swapFavicons() {
+    for (const link of document.querySelectorAll('link.js-site-favicon')) {
+      const href = link.getAttribute('href') || '';
+      if (!href.includes('/favicon-failure')) continue;
+      const ours = href.replace('/favicon-failure', '/favicon-pending');
+      active.favicons.set(link, { original: href, ours });
+      link.setAttribute('href', ours);
+    }
+  }
+
+  function restoreFavicons() {
+    for (const [link, { original, ours }] of active.favicons) {
+      // Only undo our own change; if GitHub has set a new favicon since, keep it.
+      if (link.isConnected && link.getAttribute('href') === ours) link.setAttribute('href', original);
+    }
+  }
+
   function revert() {
     if (!active) return;
+    restoreFavicons();
     if (isOurText(active.heading, NEW_HEADING)) active.heading.nodeValue = active.headingOriginal;
     restoreSubtext();
     for (const el of active.marked) {
@@ -649,6 +674,8 @@
   const observer = new MutationObserver(schedule);
   // Observe <html>, not <body>: Turbo swaps the whole <body> on navigation.
   observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+  // GitHub swaps the status favicon by changing href on the existing <link>.
+  if (document.head) observer.observe(document.head, { attributes: true, subtree: true, attributeFilter: ['href'] });
 
   for (const type of ['turbo:load', 'turbo:render', 'turbo:frame-load', 'pjax:end', 'popstate', 'pageshow']) {
     window.addEventListener(type, schedule);
