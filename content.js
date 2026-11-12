@@ -22,14 +22,16 @@
 
   const ORIGINAL_HEADING = 'Required checks failing';
   const ORIGINAL_SUBTEXT = 'Fix the failing required checks.';
-  const NEW_HEADING = 'Review required';
-  const NEW_SUBTEXT = 'At least 1 approving review is required.';
 
   const PR_PATH = /^\/[^/]+\/[^/]+\/pull\/\d+/;
 
   /** Explicit evidence that a review is what's missing. */
   const REVIEW_RE =
-    /\breview required\b|\bapproving reviews?\b|\bwaiting on code owner review\b|\bcode owner review required\b|\brequires? (?:an? )?approv|\bapprovals?\s+[1-9]\d*\s+(?:still\s+)?required\b/i;
+    /\breview required\b|\bapproving reviews?\b|\bwaiting on code owner review\b|\bcode owner review required\b|\brequires? (?:an? )?approv|\b[1-9]\d*\s+still\s+required\b|\brequested\s+changes?\b|\bchanges\s+requested\b/i;
+
+  /** Approvals summary: "1 still required" / "1 requested changes". */
+  const STILL_REQUIRED_RE = /\b([1-9]\d*)\s+still\s+required\b/i;
+  const CHANGES_RE = /\b([1-9]\d*)\s+requested\s+changes?\b|\bchanges\s+requested\b/i;
 
   /**
    * Name of a failing *status check* that is really a review gate (e.g. an n8n
@@ -154,7 +156,7 @@
   // ---------------------------------------------------------------------------
 
   function findHeading() {
-    if (active && isOurText(active.heading, NEW_HEADING)) return active.heading;
+    if (active && isOurText(active.heading, active.texts.heading)) return active.heading;
     return findTextNodes(ORIGINAL_HEADING, document.body)[0] || null;
   }
 
@@ -178,7 +180,7 @@
   }
 
   function findSubtext(root) {
-    if (active && isOurText(active.subtext, NEW_SUBTEXT) && root.contains(active.subtext)) {
+    if (active && isOurText(active.subtext, active.texts.subtext) && root.contains(active.subtext)) {
       return active.subtext;
     }
     return findTextNodes(ORIGINAL_SUBTEXT, root)[0] || null;
@@ -306,28 +308,63 @@
     return false;
   }
 
-  /** Returns null to override, or the reason for leaving GitHub's UI alone. */
-  function whyNot(ctx, checks) {
+  /**
+   * What the header should say, based on the merge box's own review summary.
+   * `tone` "attention" recolours the badge yellow; "danger" keeps GitHub's red,
+   * because requested changes are a real blocker the author has to act on.
+   */
+  function describe(text, gateNames) {
+    const changes = text.match(CHANGES_RE);
+    if (changes) {
+      const n = Number(changes[1] || 1);
+      return {
+        heading: 'Changes requested',
+        subtext: `${n} review${n > 1 ? 's' : ''} requesting changes.`,
+        tone: 'danger',
+      };
+    }
+    if (REVIEW_RE.test(text)) {
+      const n = Number((text.match(STILL_REQUIRED_RE) || [])[1] || 1);
+      return {
+        heading: 'Review required',
+        subtext: n > 1 ? `At least ${n} approving reviews are required.` : 'At least 1 approving review is required.',
+        tone: 'attention',
+      };
+    }
+    if (gateNames.length) {
+      // Approvals look fine to GitHub, but a review-gate check still waits.
+      return {
+        heading: 'Review required',
+        subtext: `Waiting for ${gateNames.map((n) => `"${n}"`).join(', ')}.`,
+        tone: 'attention',
+      };
+    }
+    return null;
+  }
+
+  /** Returns {texts} to override, or {reason} for leaving GitHub's UI alone. */
+  function decide(ctx, checks) {
     const text = collectText(ctx.root, ctx.exclude);
-    if (!REVIEW_RE.test(text)) return 'no "review required" / "approvals still required" text in merge box';
 
     if (checks.status === 'ok') {
       // Authoritative data from GitHub's own merge box endpoint.
       const failing = checks.checks.filter((c) => FAIL_STATES.has(c.state));
       const real = failing.filter((c) => !REVIEW_GATE_RE.test(checkName(c)));
       if (real.length) {
-        return `failing check(s): ${real.map((c) => `"${checkName(c)}" (${c.state})`).join(', ')}`;
+        return { reason: `failing check(s): ${real.map((c) => `"${checkName(c)}" (${c.state})`).join(', ')}` };
       }
-      // Safety net in case the cached data is a few seconds behind the UI.
+      // Safety net in case the data is a few seconds behind the UI.
       for (const m of text.matchAll(FAILING_COUNT_RE)) {
-        if (Number(m[1]) > failing.length) return `merge box shows more failing checks than ${failing.length}`;
+        if (Number(m[1]) > failing.length) return { reason: `merge box shows more failing checks than ${failing.length}` };
       }
-      return null;
+      const texts = describe(text, failing.map(checkName));
+      return texts ? { texts } : { reason: 'no failing check and no review indicator' };
     }
 
     // Endpoint unavailable: fall back to reading the (expanded) checks list.
-    if (hasFailedChecks(ctx)) return lastFailure || 'failed check detected';
-    return null;
+    if (hasFailedChecks(ctx)) return { reason: lastFailure || 'failed check detected' };
+    const texts = describe(text, []);
+    return texts ? { texts } : { reason: 'no "review required" / "changes requested" text in merge box' };
   }
 
   // ---------------------------------------------------------------------------
@@ -343,6 +380,24 @@
 
   /** @type {null | {base: string, sig: string, at: number, status: 'pending'|'ok'|'error', checks: any[] | null}} */
   let checksCache = null;
+
+  /**
+   * Check data captured from GitHub's own status_checks requests by page-hook.js.
+   * Keyed by lower-cased PR base path. Always the freshest data GitHub itself has.
+   * @type {Map<string, {status: 'ok', checks: any[], at: number}>}
+   */
+  const hookedChecks = new Map();
+
+  window.addEventListener('ghrr:status-checks', (event) => {
+    try {
+      const { base, data } = JSON.parse(event.detail);
+      if (typeof base !== 'string' || !data || !Array.isArray(data.statusChecks)) return;
+      hookedChecks.set(base.toLowerCase(), { status: 'ok', checks: data.statusChecks, at: Date.now() });
+      schedule();
+    } catch {
+      /* ignore malformed events */
+    }
+  });
   let checksRetryTimer = null;
 
   /**
@@ -353,6 +408,11 @@
    */
   function getChecks(ctx) {
     const base = location.pathname.match(PR_PATH)[0];
+
+    // Prefer what GitHub itself fetched most recently.
+    const hooked = hookedChecks.get(base.toLowerCase());
+    if (hooked) return hooked;
+
     const sig = collectText(ctx.root, ctx.exclude);
     const now = Date.now();
     const prev = checksCache && checksCache.base === base ? checksCache : null;
@@ -528,10 +588,13 @@
   // Apply / revert
   // ---------------------------------------------------------------------------
 
-  function apply(ctx) {
-    if (active && active.heading !== ctx.heading) revert();
+  const sameTexts = (a, b) => a.heading === b.heading && a.subtext === b.subtext && a.tone === b.tone;
+
+  function apply(ctx, texts) {
+    if (active && (active.heading !== ctx.heading || !sameTexts(active.texts, texts))) revert();
     if (!active) {
       active = {
+        texts,
         heading: ctx.heading,
         headingOriginal: ctx.heading.nodeValue,
         subtext: null,
@@ -543,7 +606,7 @@
 
     if (ctx.heading.nodeValue.trim() === ORIGINAL_HEADING) {
       active.headingOriginal = ctx.heading.nodeValue;
-      swapText(ctx.heading, ORIGINAL_HEADING, NEW_HEADING);
+      swapText(ctx.heading, ORIGINAL_HEADING, texts.heading);
     }
 
     if (ctx.subtext) {
@@ -554,20 +617,20 @@
       }
       if (ctx.subtext.nodeValue.trim() === ORIGINAL_SUBTEXT) {
         active.subtextOriginal = ctx.subtext.nodeValue;
-        swapText(ctx.subtext, ORIGINAL_SUBTEXT, NEW_SUBTEXT);
+        swapText(ctx.subtext, ORIGINAL_SUBTEXT, texts.subtext);
       }
     }
 
     // Forget marks on nodes React has since removed.
     for (const el of active.marked) if (!el.isConnected) active.marked.delete(el);
 
-    setAttr(ctx.header, 'data-ghrr-override', 'review-required');
-    applyColours(ctx);
+    setAttr(ctx.header, 'data-ghrr-override', texts.tone === 'danger' ? 'changes-requested' : 'review-required');
+    if (texts.tone === 'attention') applyColours(ctx);
     swapFavicons();
   }
 
   function restoreSubtext() {
-    if (active && isOurText(active.subtext, NEW_SUBTEXT)) {
+    if (active && isOurText(active.subtext, active.texts.subtext)) {
       active.subtext.nodeValue = active.subtextOriginal;
     }
   }
@@ -597,7 +660,7 @@
   function revert() {
     if (!active) return;
     restoreFavicons();
-    if (isOurText(active.heading, NEW_HEADING)) active.heading.nodeValue = active.headingOriginal;
+    if (isOurText(active.heading, active.texts.heading)) active.heading.nodeValue = active.headingOriginal;
     restoreSubtext();
     for (const el of active.marked) {
       for (const attr of MARK_ATTRS) el.removeAttribute(attr);
@@ -631,10 +694,10 @@
     const checks = getChecks(ctx);
     if (checks.status === 'pending') return; // first load: wait for data, change nothing
 
-    const reason = whyNot(ctx, checks);
-    if (reason === null) {
-      report('override ACTIVE: blocked only by a missing review', ctx.root);
-      apply(ctx);
+    const { texts, reason } = decide(ctx, checks);
+    if (texts) {
+      report(`override ACTIVE: "${texts.heading}" / "${texts.subtext}"`, ctx.root);
+      apply(ctx, texts);
     } else {
       report(`override skipped: ${reason}`, ctx.root);
       revert();
@@ -683,5 +746,7 @@
   }
   if (window.navigation) window.navigation.addEventListener('navigatesuccess', schedule);
 
+  // page-hook.js may have seen GitHub's first request before this script loaded.
+  window.dispatchEvent(new CustomEvent('ghrr:replay'));
   schedule();
 })();
