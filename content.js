@@ -1,5 +1,5 @@
 /*
- * GitHub – Chill Pill (not failing, just lonely)
+ * Chill Pill for GitHub (not failing, just lonely)
  *
  * When GitHub's merge box says "Required checks failing" although no CI check
  * failed and the PR is really only waiting for a review, relabel it as

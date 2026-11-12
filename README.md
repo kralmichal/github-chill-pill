@@ -1,6 +1,6 @@
 <img src="icons/icon128.png" width="96" height="96" alt="">
 
-# GitHub – Chill Pill
+# Chill Pill for GitHub
 
 > Not failing, just lonely.
 

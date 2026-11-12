@@ -3,7 +3,7 @@
 Copy-paste texts for the Chrome Web Store developer dashboard.
 
 ## Name
-GitHub – Chill Pill
+Chill Pill for GitHub
 
 ## Summary (max 132 characters)
 Not failing, just lonely. Shows "Review required" instead of a fake "Required checks failing" when a PR only needs a review.
@@ -22,7 +22,7 @@ When a repository uses rulesets, GitHub's pull request merge box sometimes shows
 failed. The only thing blocking the merge is a missing approval, often reported through a
 review-gate status check such as "Review approved by everyone".
 
-GitHub – Chill Pill notices this and calms the merge box down:
+Chill Pill notices this and calms the merge box down:
 
 • The heading becomes "Review required", the subtext "At least 1 approving review is required."
 • The red error badge turns into GitHub's yellow attention style, in light and dark themes.

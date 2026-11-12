@@ -1,8 +1,8 @@
-# Privacy Policy – GitHub – Chill Pill
+# Privacy Policy – Chill Pill for GitHub
 
 _Last updated: 2026-11-12_
 
-GitHub – Chill Pill does not collect, store, sell or transmit any personal data.
+Chill Pill for GitHub does not collect, store, sell or transmit any personal data.
 
 ## What the extension does
 

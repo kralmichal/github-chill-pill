@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "GitHub – Chill Pill",
+  "name": "Chill Pill for GitHub",
   "version": "1.0.0",
   "description": "Not failing, just lonely. Shows \"Review required\" instead of a fake \"Required checks failing\" when a PR only needs a review.",
   "homepage_url": "https://github.com/kralmichal/github-chill-pill",
