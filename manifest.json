@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "GitHub – Chill Pill",
+  "version": "1.0.0",
+  "description": "Not failing, just lonely. Shows \"Review required\" instead of a fake \"Required checks failing\" when a PR only needs a review.",
+  "minimum_chrome_version": "105",
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

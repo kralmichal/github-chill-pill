@@ -1,0 +1,72 @@
+/*
+ * GitHub – Chill Pill (not failing, just lonely)
+ *
+ * Every rule is scoped to data-ghrr-* attributes set by content.js, so nothing
+ * on the page changes unless the override is active. Colours come from Primer
+ * CSS variables (with legacy-token and hex fallbacks), which keeps the result
+ * correct in every GitHub light/dark/high-contrast theme.
+ */
+
+/* Text / currentColor (icons drawn with fill="currentColor"). */
+[data-ghrr-fg] {
+  color: var(--fgColor-attention, var(--color-attention-fg, #9a6700)) !important;
+}
+
+svg[data-ghrr-fg] {
+  fill: var(--fgColor-attention, var(--color-attention-fg, #9a6700)) !important;
+}
+
+/* Filled badge behind the icon (e.g. the round status circle). */
+[data-ghrr-bg="emphasis"] {
+  background-color: var(--bgColor-attention-emphasis, var(--color-attention-emphasis, #9a6700)) !important;
+}
+
+[data-ghrr-bg="muted"] {
+  background-color: var(--bgColor-attention-muted, var(--color-attention-subtle, #fff8c5)) !important;
+}
+
+/* Red outlines on the badge / merge box sections. */
+[data-ghrr-border="emphasis"] {
+  border-color: var(--borderColor-attention-emphasis, var(--color-attention-emphasis, #9a6700)) !important;
+}
+
+[data-ghrr-border="muted"] {
+  border-color: var(--borderColor-attention-muted, var(--color-attention-muted, rgba(212, 167, 44, 0.4))) !important;
+}
+
+/*
+ * Icon swap: the original React-rendered <svg> (an "X") stays in the DOM but is
+ * hidden; its wrapper draws Primer's "alert" octicon on top via a CSS mask.
+ * --ghrr-icon-size is measured from the original svg by content.js.
+ */
+[data-ghrr-icon] {
+  position: relative !important;
+}
+
+[data-ghrr-icon] > svg[data-ghrr-icon-hidden] {
+  visibility: hidden !important;
+}
+
+[data-ghrr-icon]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: var(--ghrr-icon-size, 16px);
+  height: var(--ghrr-icon-size, 16px);
+  pointer-events: none;
+  background-color: currentColor;
+  -webkit-mask: var(--ghrr-alert-icon) center / contain no-repeat;
+  mask: var(--ghrr-alert-icon) center / contain no-repeat;
+  --ghrr-alert-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z'/%3E%3C/svg%3E");
+}
+
+/* Icon was drawn in the danger foreground colour -> attention foreground. */
+[data-ghrr-icon="glyph"]::after {
+  background-color: var(--fgColor-attention, var(--color-attention-fg, #9a6700));
+}
+
+/* Icon sat on a filled (emphasis) badge -> keep the on-emphasis contrast colour. */
+[data-ghrr-icon="on-emphasis"]::after {
+  background-color: var(--fgColor-onEmphasis, var(--color-fg-on-emphasis, #ffffff));
+}
