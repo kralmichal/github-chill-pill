@@ -1,4 +1,4 @@
-<img src="assets/icon.svg" width="64" height="64" alt="">
+<img src="icons/icon128.png" width="96" height="96" alt="">
 
 # GitHub – Chill Pill
 
@@ -34,5 +34,21 @@ After you change the code, click ↻ on the extension card and reload the GitHub
 
 ## Debugging
 
-Open DevTools on a PR and filter the console by `ghrr`. Each time the decision changes,
+Open DevTools on a PR, set the console level to include **Verbose**, and filter by `ghrr`.
+Each time the decision changes,
 you get a line with the reason (for example `override skipped: failing check(s): "build" (FAILURE)`).
+
+## Publishing to the Chrome Web Store
+
+1. Bump `version` in `manifest.json`.
+2. Run `./package.sh`. It creates `dist/github-chill-pill-<version>.zip` with only the files
+   the extension needs.
+3. Upload the zip in the [Chrome Web Store developer dashboard](https://chrome.google.com/webstore/devconsole).
+4. Copy the listing texts, privacy answers and asset paths from [`store/LISTING.md`](store/LISTING.md).
+   The privacy policy is in [`PRIVACY.md`](PRIVACY.md).
+
+<img src="store/screenshot-1280x800.png" width="640" alt="Merge box before and after">
+
+## License
+
+[MIT](LICENSE)
