@@ -3,12 +3,25 @@
   "name": "GitHub – Chill Pill",
   "version": "1.0.0",
   "description": "Not failing, just lonely. Shows \"Review required\" instead of a fake \"Required checks failing\" when a PR only needs a review.",
+  "homepage_url": "https://github.com/kralmichal/github-chill-pill",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "minimum_chrome_version": "105",
   "content_scripts": [
     {
-      "matches": ["https://github.com/*"],
-      "js": ["content.js"],
-      "css": ["styles.css"],
+      "matches": [
+        "https://github.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
       "run_at": "document_idle"
     }
   ]
