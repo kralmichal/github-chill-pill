@@ -390,7 +390,7 @@
       })
       .catch((err) => {
         entry.status = 'error';
-        console.info('[ghrr] status_checks endpoint unavailable, using DOM fallback:', err.message);
+        console.debug('[ghrr] status_checks endpoint unavailable, using DOM fallback:', err.message);
       })
       .finally(() => {
         entry.at = Date.now();
@@ -590,7 +590,7 @@
   function report(msg, root) {
     if (msg === lastLog) return;
     lastLog = msg;
-    console.info(`[ghrr] ${msg}`, root || '');
+    console.debug(`[ghrr] ${msg}`, root || '');
   }
 
   function evaluate() {
