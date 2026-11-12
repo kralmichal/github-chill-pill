@@ -381,23 +381,6 @@
   /** @type {null | {base: string, sig: string, at: number, status: 'pending'|'ok'|'error', checks: any[] | null}} */
   let checksCache = null;
 
-  /**
-   * Check data captured from GitHub's own status_checks requests by page-hook.js.
-   * Keyed by lower-cased PR base path. Always the freshest data GitHub itself has.
-   * @type {Map<string, {status: 'ok', checks: any[], at: number}>}
-   */
-  const hookedChecks = new Map();
-
-  window.addEventListener('ghrr:status-checks', (event) => {
-    try {
-      const { base, data } = JSON.parse(event.detail);
-      if (typeof base !== 'string' || !data || !Array.isArray(data.statusChecks)) return;
-      hookedChecks.set(base.toLowerCase(), { status: 'ok', checks: data.statusChecks, at: Date.now() });
-      schedule();
-    } catch {
-      /* ignore malformed events */
-    }
-  });
   let checksRetryTimer = null;
 
   /**
@@ -408,10 +391,6 @@
    */
   function getChecks(ctx) {
     const base = location.pathname.match(PR_PATH)[0];
-
-    // Prefer what GitHub itself fetched most recently.
-    const hooked = hookedChecks.get(base.toLowerCase());
-    if (hooked) return hooked;
 
     const sig = collectText(ctx.root, ctx.exclude);
     const now = Date.now();
@@ -746,7 +725,5 @@
   }
   if (window.navigation) window.navigation.addEventListener('navigatesuccess', schedule);
 
-  // page-hook.js may have seen GitHub's first request before this script loaded.
-  window.dispatchEvent(new CustomEvent('ghrr:replay'));
   schedule();
 })();

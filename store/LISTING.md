@@ -30,7 +30,7 @@ Chill Pill notices this and calms the merge box down:
 • If a real CI check fails, the original red state comes back straight away. Real failures are never hidden.
 
 How it works
-• It reads a copy of the check data GitHub's merge box loads, so it reacts to background updates straight away and works even when the checks list is collapsed. GitHub's requests are never modified.
+• It reads the check states from the same github.com endpoint GitHub's merge box uses, so it works even when the checks list is collapsed.
 • It overrides only when every failing check is a review gate and the merge box reports a missing approval.
 • It is React-safe: it changes only text and adds CSS attributes, and never rebuilds GitHub's UI.
 

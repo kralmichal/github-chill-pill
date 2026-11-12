@@ -15,11 +15,9 @@ attention colours, so it works in light and dark themes).
 - No permissions, no background worker, no storage. A single content script runs on
   `https://github.com/*` (so GitHub's SPA navigation is covered) and does nothing outside
   `/<owner>/<repo>/pull/<n>`.
-- Check states come from GitHub's own merge box requests to
-  `/{owner}/{repo}/pull/{n}/page_data/status_checks`. A small page hook (`page-hook.js`)
-  reads a copy of each response, so background updates are picked up straight away, even
-  when the checks list is collapsed. The request and response are not modified. If the
-  hook sees nothing, the extension makes the same request itself.
+- Check states come from the same endpoint GitHub's merge box uses,
+  `/{owner}/{repo}/pull/{n}/page_data/status_checks` (same origin, your session). It works
+  even when the checks list is collapsed.
 - Overrides only when every failing check is a review gate (name contains
   review/approv…, e.g. an n8n status "Review approved by everyone"). Any other failing
   check leaves GitHub's red UI alone.
